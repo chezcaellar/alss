@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Student, Barangay } from '@/types';
@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { composeStudentName, getStudentNameParts } from '@/utils/name-formatter';
 
 interface StudentFormProps {
   student?: Student;
@@ -48,6 +49,12 @@ export function StudentForm({ student, barangays, user, onSubmit, onCancel, isSu
   const filteredBarangays = user?.role === 'admin' && user?.assignedBarangayId
     ? barangays.filter(b => b._id === user.assignedBarangayId)
     : barangays;
+
+  const initialParsedName = getStudentNameParts(student);
+  const [lastName, setLastName] = useState(initialParsedName.lastName || '');
+  const [firstName, setFirstName] = useState(initialParsedName.firstName || '');
+  const [middleName, setMiddleName] = useState(initialParsedName.middleName || '');
+  const [nameErrors, setNameErrors] = useState<{ last?: string; first?: string }>({});
 
   // Initialize form with React Hook Form and Zod validation
   const form = useForm<StudentFormValues>({
@@ -65,13 +72,55 @@ export function StudentForm({ student, barangays, user, onSubmit, onCancel, isSu
       pisScore: student?.pisScore || null,
       assessment: student?.assessment || '',
       group: student?.group || 'A',
+      firstName: student?.firstName || initialParsedName.firstName || '',
+      middleName: student?.middleName || initialParsedName.middleName || '',
+      lastName: student?.lastName || initialParsedName.lastName || '',
     },
   });
 
+  // Keep name parts in sync when edit dialog opens with different student
+  useEffect(() => {
+    const parsed = getStudentNameParts(student);
+    setLastName(parsed.lastName || '');
+    setFirstName(parsed.firstName || '');
+    setMiddleName(parsed.middleName || '');
+  }, [student]);
+
+  // Update full name value whenever name parts change
+  useEffect(() => {
+    const formatted = composeStudentName(lastName, firstName, middleName);
+    form.setValue('name', formatted, { shouldValidate: true });
+  }, [lastName, firstName, middleName, form]);
+
   // Handle form submission
   const handleSubmit = async (data: StudentFormValues) => {
+    const errors: { last?: string; first?: string } = {};
+    if (!lastName.trim()) {
+      errors.last = 'Last name is required';
+    }
+    if (!firstName.trim()) {
+      errors.first = 'First name is required';
+    }
+    setNameErrors(errors);
+
+    if (errors.last || errors.first) {
+      form.setError('name', { type: 'manual', message: 'Please complete the name fields.' });
+      return;
+    } else {
+      form.clearErrors('name');
+    }
+
+    const formattedName = composeStudentName(lastName, firstName, middleName);
+    const payload: StudentFormValues = {
+      ...data,
+      name: formattedName,
+      lastName,
+      firstName,
+      middleName,
+    };
+
     try {
-      await onSubmit(data);
+      await onSubmit(payload);
     } catch (error) {
       // Map specific errors to field-level validation
       const message = error instanceof Error ? error.message : String(error);
@@ -111,19 +160,55 @@ export function StudentForm({ student, barangays, user, onSubmit, onCancel, isSu
             )}
           />
 
-          {/* Name */}
+          {/* Last Name */}
+          <FormItem>
+            <FormLabel className="text-blue-700 font-semibold">Last Name</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="e.g. dela Cruz"
+                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </FormControl>
+            {nameErrors.last && <p className="text-sm text-red-500">{nameErrors.last}</p>}
+          </FormItem>
+
+          {/* First Name */}
+          <FormItem>
+            <FormLabel className="text-blue-700 font-semibold">First Name</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="e.g. Juan"
+                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </FormControl>
+            {nameErrors.first && <p className="text-sm text-red-500">{nameErrors.first}</p>}
+          </FormItem>
+
+          {/* Middle Name */}
+          <FormItem>
+            <FormLabel className="text-blue-700 font-semibold">Middle Name (optional)</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="e.g. Santos"
+                className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                value={middleName}
+                onChange={(e) => setMiddleName(e.target.value)}
+              />
+            </FormControl>
+          </FormItem>
+
+          {/* Hidden full name field to satisfy schema */}
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-700 font-semibold">Full Name</FormLabel>
+              <FormItem className="hidden">
                 <FormControl>
-                  <Input
-                    placeholder="e.g. DELA CRUZ, Juan M."
-                    className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                    {...field}
-                  />
+                  <Input {...field} value={composeStudentName(lastName, firstName, middleName)} readOnly />
                 </FormControl>
                 <FormMessage />
               </FormItem>

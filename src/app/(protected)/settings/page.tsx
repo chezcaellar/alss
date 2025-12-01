@@ -26,10 +26,6 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">SETTINGS</h1>
-      </div>
-
       <Tabs defaultValue="accessibility" className="space-y-6">
         <TabsList className="bg-white dark:bg-slate-800 border-4 border-blue-600 dark:border-blue-500">
           <TabsTrigger value="accessibility" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">

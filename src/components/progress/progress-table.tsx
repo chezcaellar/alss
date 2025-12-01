@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useSearchStore } from '@/store/search-store';
+import { formatStudentName } from '@/utils/name-formatter';
 
 interface ProgressTableProps {
   students: Student[];
@@ -103,9 +104,9 @@ export const ProgressTable = memo(function ProgressTable({
               <TableCell className="text-left font-medium text-gray-900 dark:text-white">
                 {student.lrn}
               </TableCell>
-              <TableCell className="text-left text-gray-900 dark:text-white">
-                {student.name}
-              </TableCell>
+                     <TableCell className="text-left text-gray-900 dark:text-white">
+                       {formatStudentName(student.name)}
+                     </TableCell>
               <TableCell className="text-left text-gray-900 dark:text-white">
                 {student.program}
               </TableCell>

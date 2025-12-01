@@ -256,19 +256,12 @@ export default function AdminManagementPage() {
     setIsEditDialogOpen(true);
   };
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
 
   return (
       <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-            ADMIN MANAGEMENT
-          </h1>
           <p className="text-gray-600 dark:text-gray-300 mt-1">
             Manage administrator accounts for the Alternative Learning System
           </p>

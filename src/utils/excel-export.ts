@@ -1,23 +1,6 @@
 import * as XLSX from 'xlsx';
 import { Student, Barangay, Progress, Module, Activity } from '@/types';
-
-/**
- * Format date to consistent format: MM/DD/YYYY
- */
-export function formatDateForExport(dateString: string): string {
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return dateString; // Return original if invalid
-    }
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
-  } catch {
-    return dateString;
-  }
-}
+import { formatDateForExport } from './date-formatter';
 
 /**
  * Generate filename with consistent format: [Type]_[Date].xlsx
@@ -63,7 +46,7 @@ export function exportStudentMasterlist(
   // Prepare data rows
   const rows = students.map(student => [
     student.lrn,
-    student.name,
+    formatStudentName(student.name),
     student.status.toUpperCase(),
     student.gender.toUpperCase(),
     student.address,
@@ -115,7 +98,7 @@ export function exportStudentScoreSummary(
   const studentHeaders = ['Field', 'Value'];
   const studentData = [
     ['LRN', student.lrn],
-    ['Name', student.name],
+    ['Name', formatStudentName(student.name)],
     ['Status', student.status.toUpperCase()],
     ['Gender', student.gender.toUpperCase()],
     ['Address', student.address],

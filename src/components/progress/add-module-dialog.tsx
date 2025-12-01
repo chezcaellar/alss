@@ -40,18 +40,22 @@ export function AddModuleDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>('');
 
-  // Fetch available modules for the student's program
+  // Fetch available modules for the student's program and barangay
   useEffect(() => {
     if (isOpen && student) {
       const loadModules = async () => {
         setLoading(true);
         try {
-          const allModules = await fetchModules();
+          // Fetch modules filtered by student's barangay
+          const allModules = await fetchModules(student.barangayId);
           // Filter modules by student's program
           const filteredModules = allModules.filter(
             (module) =>
-              module.levels?.includes(student.program) ||
-              module.levels?.includes("All Programs")
+              // Filter by barangay: show modules for this barangay OR modules without barangayId (legacy/global)
+              (!module.barangayId || module.barangayId === student.barangayId) &&
+              // Filter by program
+              (module.levels?.includes(student.program) ||
+              module.levels?.includes("All Programs"))
           );
           setModules(filteredModules);
         } catch (error) {

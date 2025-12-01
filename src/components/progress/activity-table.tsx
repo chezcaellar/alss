@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, FileText } from 'lucide-react';
 import { EditActivityModal } from './edit-activity-modal';
+import { formatDate } from '@/utils/date-formatter';
 
 interface ActivityTableProps {
   activities: Activity[];
@@ -80,15 +81,6 @@ export function ActivityTable({
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Format date to match the design (MM/DD/YY)
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: '2-digit'
-    });
-  };
 
   // Always show the table structure, even if empty
   const hasActivities = activities.length > 0;

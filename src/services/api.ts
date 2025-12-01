@@ -59,13 +59,20 @@ export const fetchBarangays = async (): Promise<Barangay[]> => {
 };
 
 // Load modules data
-export const fetchModules = async (): Promise<Module[]> => {
+export const fetchModules = async (barangayId?: string): Promise<Module[]> => {
   try {
     let modules: Module[] = [];
 
+    // Build URL with barangayId filter if provided
+    const url = barangayId 
+      ? `${process.env.NEXT_PUBLIC_BASE_URL}/api/modules?barangayId=${encodeURIComponent(barangayId)}`
+      : `${process.env.NEXT_PUBLIC_BASE_URL}/api/modules`;
+
     // Fetch modules from API
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/modules`, {
+    const res = await fetch(url, {
       method: "GET",
+      cache: "default",
+      next: { revalidate: 30 }
     });
 
     // check if the response is successful
@@ -74,7 +81,7 @@ export const fetchModules = async (): Promise<Module[]> => {
       modules = response as Module[];
     }
 
-    console.log(`📊 Loaded ${modules.length} modules from storage`);
+    console.log(`📊 Loaded ${modules.length} modules${barangayId ? ` for barangay ${barangayId}` : ''} from storage`);
 
     return modules;
   } catch (error) {
@@ -83,7 +90,7 @@ export const fetchModules = async (): Promise<Module[]> => {
   }
 };
 
-export const createModule = async (moduleData: ModulePayload): Promise<Module> => {
+export const createModule = async (moduleData: ModulePayload & { barangayId?: string }): Promise<Module> => {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/modules`, {
       method: "POST",
@@ -91,6 +98,7 @@ export const createModule = async (moduleData: ModulePayload): Promise<Module> =
         "Content-Type": "application/json",
       },
       body: JSON.stringify(moduleData),
+      credentials: 'include', // Include cookies for barangay validation
     });
 
     if (!res.ok) {
@@ -110,6 +118,7 @@ export const createModule = async (moduleData: ModulePayload): Promise<Module> =
       title: payload.title ?? moduleData.title,
       levels: payload.levels ?? moduleData.levels,
       predefinedActivities: payload.predefinedActivities ?? moduleData.predefinedActivities,
+      barangayId: payload.barangayId ?? moduleData.barangayId,
     };
   } catch (error) {
     console.error("Error creating module:", error);
@@ -117,7 +126,7 @@ export const createModule = async (moduleData: ModulePayload): Promise<Module> =
   }
 };
 
-export const updateModule = async (_id: string, moduleData: ModulePayload): Promise<Module> => {
+export const updateModule = async (_id: string, moduleData: ModulePayload & { barangayId?: string }): Promise<Module> => {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/modules`, {
       method: "PATCH",
@@ -125,6 +134,7 @@ export const updateModule = async (_id: string, moduleData: ModulePayload): Prom
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ _id, ...moduleData }),
+      credentials: 'include', // Include cookies for barangay validation
     });
 
     if (!res.ok) {
@@ -144,6 +154,7 @@ export const updateModule = async (_id: string, moduleData: ModulePayload): Prom
       title: payload.title ?? moduleData.title,
       levels: payload.levels ?? moduleData.levels,
       predefinedActivities: payload.predefinedActivities ?? moduleData.predefinedActivities,
+      barangayId: payload.barangayId ?? moduleData.barangayId,
     };
   } catch (error) {
     console.error("Error updating module:", error);
@@ -159,6 +170,7 @@ export const deleteModule = async (_id: string): Promise<void> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ _id }),
+      credentials: 'include', // Include cookies for barangay validation
     });
 
     if (!res.ok) {

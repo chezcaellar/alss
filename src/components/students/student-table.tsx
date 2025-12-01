@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { formatStudentName } from '@/utils/name-formatter';
 
 interface StudentTableProps {
   students: Student[];
@@ -62,7 +63,7 @@ export const StudentTable = memo(function StudentTable({
     }
 
     return 0;
-    });
+  });
   }, [students, sortField, sortDirection]);
 
   return (
@@ -129,7 +130,7 @@ export const StudentTable = memo(function StudentTable({
                 className="bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               >
                 <TableCell className="font-medium text-gray-900 dark:text-white">{student.lrn}</TableCell>
-                <TableCell className="text-gray-900 dark:text-white">{student.name}</TableCell>
+                <TableCell className="text-gray-900 dark:text-white">{formatStudentName(student.name)}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                     student.status === 'active'

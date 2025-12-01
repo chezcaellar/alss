@@ -137,15 +137,15 @@ export default function ProtectedLayout({
     // Initial load
     loadNotifications();
 
-      // Set up real-time polling for master admin
-      if (user?.role === 'master_admin') {
-        // Only poll when page is visible
-        const startPolling = () => {
-          if (interval) return; // Already polling
-          
+    // Set up real-time polling for master admin
+    if (user?.role === 'master_admin') {
+      // Only poll when page is visible
+      const startPolling = () => {
+        if (interval) return; // Already polling
+        
           // Poll every 10 seconds to reduce server load (was 2 seconds)
           interval = setInterval(loadNotifications, 10000);
-        };
+      };
 
       const stopPolling = () => {
         if (interval) {

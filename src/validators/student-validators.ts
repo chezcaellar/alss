@@ -19,6 +19,9 @@ export const studentSchema = z.object({
   assessment: z.string().optional(),
   group: z.string().min(1, { message: "Group is required" }),
   image: z.string().optional(),
+  firstName: z.string().optional(),
+  middleName: z.string().optional(),
+  lastName: z.string().optional(),
 });
 
 // Type for the form values

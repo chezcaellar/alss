@@ -31,18 +31,9 @@ export default function ProfilePage() {
     );
   }
 
-  const formatDate = (dateString?: string) => {
+  const formatDateWithFallback = (dateString?: string) => {
     if (!dateString) return 'Not set';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-    } catch {
-      return dateString;
-    }
+    return formatDate(dateString);
   };
 
   const getBarangayName = (barangayId?: string) => {
@@ -180,7 +171,6 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">MY PROFILE</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -327,7 +317,7 @@ export default function ProfilePage() {
                       <Calendar className="h-4 w-4 mr-2" />
                       Birthday
                     </p>
-                    <p className="text-base text-gray-900 dark:text-white">{formatDate(user.birthday)}</p>
+                    <p className="text-base text-gray-900 dark:text-white">{formatDateWithFallback(user.birthday)}</p>
                   </div>
                 )}
               </div>
@@ -342,14 +332,14 @@ export default function ProfilePage() {
                     <Calendar className="h-4 w-4 mr-2" />
                     Account Created
                   </p>
-                  <p className="text-base text-gray-900 dark:text-white">{formatDate(user.createdAt)}</p>
+                    <p className="text-base text-gray-900 dark:text-white">{formatDateWithFallback(user.createdAt)}</p>
                 </div>
                 <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center">
                     <Calendar className="h-4 w-4 mr-2" />
                     Last Updated
                   </p>
-                  <p className="text-base text-gray-900 dark:text-white">{formatDate(user.updatedAt)}</p>
+                    <p className="text-base text-gray-900 dark:text-white">{formatDateWithFallback(user.updatedAt)}</p>
                 </div>
               </div>
             </div>

@@ -6,7 +6,9 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useProgressStore } from "@/store/progress-store";
 import { useStore } from "@/store";
+import { useAuthStoreState } from "@/store/auth-store";
 import { Student, Module, Progress, Activity, PredefinedActivity } from "@/types";
+import { formatStudentName } from "@/utils/name-formatter";
 // @ts-ignore - available at runtime
 import Image from "next/image";
 // @ts-ignore - available at runtime
@@ -62,19 +64,27 @@ const dedupeModulesById = (modules: Module[]): Module[] => {
   return Array.from(lookup.values());
 };
 
-const filterModulesForProgram = (modules: Module[], program?: string | null) => {
-  if (!program) {
-    return modules;
+const filterModulesForProgram = (modules: Module[], program?: string | null, barangayId?: string | null) => {
+  let filtered = modules;
+
+  // Filter by barangayId: show modules for this barangay OR modules without barangayId (legacy/global)
+  if (barangayId) {
+    filtered = filtered.filter((module) =>
+      !module.barangayId || module.barangayId === barangayId
+    );
   }
 
-  const normalizedProgram = String(program).trim();
-  const filtered = modules.filter((module) =>
-    module.levels?.some(
-      (level) => level === normalizedProgram || level === "All Programs"
-    )
-  );
+  // Filter by program
+  if (program) {
+    const normalizedProgram = String(program).trim();
+    filtered = filtered.filter((module) =>
+      module.levels?.some(
+        (level) => level === normalizedProgram || level === "All Programs"
+      )
+    );
+  }
 
-  return filtered.length > 0 ? filtered : modules;
+  return filtered;
 };
 
 type ModuleFormPayload = {
@@ -201,6 +211,9 @@ function StudentActivitySummaryPageContent() {
 
   // Get barangays from progress store
   const { barangays } = useProgressStore();
+  
+  // Get user to access assigned barangay for module filtering
+  const { user } = useAuthStoreState();
 
   // Create our own getStudentByLrn function using main store data with fallback
   const getStudentByLrn = useCallback(
@@ -345,14 +358,21 @@ function StudentActivitySummaryPageContent() {
     return emptyStudentProgress;
   }, [student, progress, emptyStudentProgress]);
 
-  // Load modules (static + API) once
+  // Load modules (static + API) once - filter by student's barangay
   useEffect(() => {
     const initializeModules = async () => {
       const fallbackModules = (modulesData as any[]).map(normalizeModuleRecord);
       setAllModules(fallbackModules);
 
       try {
-        const apiModules = await fetchModules();
+        // Determine which barangayId to use for filtering:
+        // 1. Student's barangay (if student is loaded)
+        // 2. Admin's assigned barangay (if admin)
+        // 3. null (get all modules)
+        const barangayIdForFilter = student?.barangayId || 
+          (user?.role === 'admin' ? user.assignedBarangayId : undefined);
+        
+        const apiModules = await fetchModules(barangayIdForFilter);
         if (apiModules && apiModules.length > 0) {
           setAllModules((prev) =>
             dedupeModulesById([
@@ -367,16 +387,19 @@ function StudentActivitySummaryPageContent() {
     };
 
     initializeModules();
-  }, []);
+  }, [student?.barangayId, user?.role, user?.assignedBarangayId]);
 
-  // Filter modules per student program
+  // Filter modules per student program and barangay
   useEffect(() => {
     if (!allModules.length) {
       setAvailableModules([]);
       return;
     }
-    setAvailableModules(filterModulesForProgram(allModules, student?.program));
-  }, [allModules, student?.program]);
+    // Filter by both program and barangay
+    const barangayId = student?.barangayId || 
+      (user?.role === 'admin' ? user.assignedBarangayId : undefined);
+    setAvailableModules(filterModulesForProgram(allModules, student?.program, barangayId));
+  }, [allModules, student?.program, student?.barangayId, user?.role, user?.assignedBarangayId]);
 
   // Update state when data changes
   useEffect(() => {
@@ -431,7 +454,16 @@ function StudentActivitySummaryPageContent() {
   const handleCreateModule = useCallback(
     async (moduleData: ModuleFormPayload) => {
       try {
-        const createdModule = await createModule(moduleData);
+        // Determine barangayId: use student's barangay or admin's assigned barangay
+        const barangayId = student?.barangayId || 
+          (user?.role === 'admin' ? user.assignedBarangayId : undefined);
+        
+        const modulePayload = {
+          ...moduleData,
+          barangayId: barangayId || undefined, // Only include if it exists
+        };
+        
+        const createdModule = await createModule(modulePayload);
         const normalized = normalizeModuleRecord(createdModule);
         setAllModules((prev) => dedupeModulesById([...prev, normalized]));
         setSelectedModule(normalized._id);
@@ -441,13 +473,24 @@ function StudentActivitySummaryPageContent() {
         throw error instanceof Error ? error : new Error("Failed to create module");
       }
     },
-    [displaySuccessMessage]
+    [displaySuccessMessage, student?.barangayId, user?.role, user?.assignedBarangayId]
   );
 
   const handleUpdateModule = useCallback(
     async (moduleId: string, moduleData: ModuleFormPayload) => {
       try {
-        const updatedModule = await updateModule(moduleId, moduleData);
+        // Determine barangayId: use student's barangay or admin's assigned barangay
+        // Note: For updates, we preserve the existing barangayId unless user is master_admin
+        const barangayId = user?.role === 'master_admin' 
+          ? (student?.barangayId || user.assignedBarangayId || undefined)
+          : (student?.barangayId || user?.assignedBarangayId || undefined);
+        
+        const modulePayload = {
+          ...moduleData,
+          barangayId: barangayId || undefined, // Only include if it exists
+        };
+        
+        const updatedModule = await updateModule(moduleId, modulePayload);
         const normalized = normalizeModuleRecord(updatedModule);
         setAllModules((prev) =>
           dedupeModulesById(
@@ -460,7 +503,7 @@ function StudentActivitySummaryPageContent() {
         throw error instanceof Error ? error : new Error("Failed to update module");
       }
     },
-    [displaySuccessMessage]
+    [displaySuccessMessage, student?.barangayId, user?.role, user?.assignedBarangayId]
   );
 
   const handleConfirmModuleDeletion = useCallback(async () => {

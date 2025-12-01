@@ -40,6 +40,9 @@ export interface Student {
   _id: string;
   lrn: string; // Learner Reference Number
   name: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   status: Status;
   gender: Gender;
   address: string;
@@ -67,6 +70,7 @@ export interface Module {
   title: string;
   levels: string[];
   predefinedActivities?: PredefinedActivity[];
+  barangayId?: string; // Optional: if not set, module is available to all barangays (for backward compatibility)
 }
 
 // Activity Interface

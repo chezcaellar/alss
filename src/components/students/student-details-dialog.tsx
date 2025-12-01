@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, User, GraduationCap, Monitor, Hash } from 'lucide-react';
+import { formatDate } from '@/utils/date-formatter';
+import { formatStudentName } from '@/utils/name-formatter';
 
 interface StudentDetailsDialogProps {
   open: boolean;
@@ -27,14 +29,6 @@ export function StudentDetailsDialog({
   if (!student) return null;
 
   const barangay = barangays.find(b => b._id === student.barangayId);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,7 +75,7 @@ export function StudentDetailsDialog({
               <div className="space-y-4">
                 <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Full Name</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{student.name}</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatStudentName(student.name)}</p>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">

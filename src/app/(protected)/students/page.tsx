@@ -155,15 +155,16 @@ export default function StudentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">STUDENT MASTERLIST</h1>
-        <Button
-          onClick={handleExportExcel}
-          className="bg-blue-600 hover:bg-blue-500 text-white cursor-pointer transition-all duration-200 hover:shadow-md"
-        >
-          <Download className="mr-2 h-4 w-4" /> Export to Excel
-        </Button>
-      </div>
+      {user?.role === 'master_admin' ? (
+        <div className="flex justify-end">
+          <Button
+            onClick={handleExportExcel}
+            className="bg-blue-600 hover:bg-blue-500 text-white cursor-pointer transition-all duration-200 hover:shadow-md"
+          >
+            <Download className="mr-2 h-4 w-4" /> Export to Excel
+          </Button>
+        </div>
+      ) : null}
 
       {/* Barangay Tabs */}
       {loadingBarangays ? (
@@ -171,9 +172,9 @@ export default function StudentsPage() {
       ) : (
         <BarangayTabs
           barangays={filteredBarangays}
-          selectedBarangay={selectedBarangay || 'all'}
+          selectedBarangay={user?.role === 'master_admin' ? selectedBarangay || 'all' : selectedBarangay}
           onSelectBarangay={setSelectedBarangay}
-          showAllOption={true}
+          showAllOption={user?.role === 'master_admin'}
         />
       )}
 
